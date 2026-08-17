@@ -42,7 +42,7 @@ jobs:
           analysis_date = date.fromisoformat(requested) if requested else datetime.now(
               ZoneInfo("Asia/Shanghai")
           ).date()
-          anchor = date(2026, 8, 18)
+          anchor = date(2026, 8, 19)
           scheduled_day = (analysis_date - anchor).days >= 0 and (analysis_date - anchor).days % 2 == 0
           should_run = os.environ["EVENT_NAME"] == "workflow_dispatch" or scheduled_day
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
