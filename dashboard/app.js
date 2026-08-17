@@ -88,7 +88,12 @@ function renderDetailContent() {
     $("#detail-content").innerHTML = renderHistory(item);
     return;
   }
-  const text = item.reports[state.tab] || "本期没有生成这一章节。";
+  const rendered = item.reports_html?.[state.tab];
+  if (rendered) {
+    $("#detail-content").innerHTML = `<article class="markdown-body">${rendered}</article>`;
+    return;
+  }
+  const text = item.reports?.[state.tab] || "本期没有生成这一章节。";
   $("#detail-content").innerHTML = `<pre class="report-text">${escapeHtml(text)}</pre>`;
 }
 

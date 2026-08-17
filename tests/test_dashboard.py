@@ -3,7 +3,13 @@ from pathlib import Path
 
 import pytest
 
-from scripts.build_dashboard import change_label, extract_summary, main, parse_sentiment
+from scripts.build_dashboard import (
+    change_label,
+    extract_summary,
+    main,
+    parse_sentiment,
+    render_markdown,
+)
 
 
 @pytest.mark.unit
@@ -27,6 +33,20 @@ def test_change_labels_are_user_facing():
 def test_summary_prefers_conclusion():
     report = "# 报告\n\n这是一段很长的普通内容，用于解释各个来源的详细信息并且提供足够多的文字。\n\n## 六、结论\n\n综合三源，当前舆情轻微看多，但机构警示与零售亢奋之间的分歧正在扩大，需要关注后续变化。"
     assert extract_summary(report).startswith("综合三源")
+
+
+@pytest.mark.unit
+def test_markdown_is_rendered_and_raw_html_is_escaped():
+    rendered = render_markdown(
+        "## 标题\n\n**重点**\n\n| 项目 | 值 |\n| --- | --- |\n| 风险 | 高 |\n\n"
+        "<script>alert('x')</script>\n\n[危险](javascript:alert(1))"
+    )
+    assert "<h2>标题</h2>" in rendered
+    assert "<strong>重点</strong>" in rendered
+    assert "<table>" in rendered
+    assert "<script>" not in rendered
+    assert "&lt;script&gt;" in rendered
+    assert 'href="javascript:' not in rendered
 
 
 def _write_run(root: Path, ticker: str, day: str, score: float) -> None:
@@ -86,5 +106,10 @@ def test_build_dashboard_compares_latest_two_runs(tmp_path):
     assert nvda["ticker"] == "NVDA"
     assert nvda["sentiment"]["delta"] == 1.2
     assert nvda["sentiment"]["change_label"] == "显著升温"
+    assert "<h2>结论</h2>" in nvda["reports_html"]["sentiment"]
+    assert nvda["report_url"].endswith("complete_report.html")
     assert len(nvda["history"]) == 2
     assert (output / "reports/NVDA/2026-08-17/complete_report.md").exists()
+    report_html = output / "reports/NVDA/2026-08-17/complete_report.html"
+    assert report_html.exists()
+    assert "返回舆情雷达" in report_html.read_text(encoding="utf-8")
