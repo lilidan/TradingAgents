@@ -117,6 +117,13 @@ ipython_config.py
 .pdm-python
 .pdm-build/
 
+# Local dashboard build/deployment worktrees
+site-dist/
+dashboard-history/
+incoming-artifacts/
+artifacts/
+.wrangler/
+
 # pixi
 #   Similar to Pipfile.lock, it is generally recommended to include pixi.lock in version control.
 # pixi.lock
