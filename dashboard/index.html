@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="重点标的舆情变化与交易研究仪表盘" />
+    <title>市场舆情雷达</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="masthead">
+      <div>
+        <p class="eyebrow">TRADINGAGENTS · SENTIMENT FIRST</p>
+        <h1>市场舆情雷达</h1>
+        <p class="subtitle">每两日追踪重点标的，优先呈现舆情升温、降温与叙事变化。</p>
+      </div>
+      <div class="freshness" aria-live="polite">
+        <span class="status-dot"></span>
+        <span id="freshness">正在读取最新分析…</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="metrics" aria-label="舆情概览">
+        <article class="metric-card">
+          <span>已覆盖</span>
+          <strong id="coverage">—</strong>
+          <small>重点标的</small>
+        </article>
+        <article class="metric-card warming">
+          <span>舆情升温</span>
+          <strong id="warming">—</strong>
+          <small>较上次分析</small>
+        </article>
+        <article class="metric-card cooling">
+          <span>舆情降温</span>
+          <strong id="cooling">—</strong>
+          <small>较上次分析</small>
+        </article>
+        <article class="metric-card">
+          <span>平均分</span>
+          <strong id="average">—</strong>
+          <small>0–10 舆情刻度</small>
+        </article>
+      </section>
+
+      <section class="toolbar" aria-label="筛选和排序">
+        <div class="filter-group" id="filters">
+          <button class="filter active" data-filter="all">全部</button>
+          <button class="filter" data-filter="warming">升温</button>
+          <button class="filter" data-filter="cooling">降温</button>
+          <button class="filter" data-filter="stable">稳定</button>
+        </div>
+        <label class="search">
+          <span class="sr-only">搜索标的</span>
+          <input id="search" type="search" placeholder="搜索标的…" autocomplete="off" />
+        </label>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">CHANGE WATCH</p>
+            <h2>舆情变化</h2>
+          </div>
+          <p>默认按变化幅度排序</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>标的</th>
+                <th>当前舆情</th>
+                <th>两期变化</th>
+                <th>主导叙事</th>
+                <th>置信度</th>
+                <th>评级</th>
+                <th>日期</th>
+              </tr>
+            </thead>
+            <tbody id="sentiment-table"></tbody>
+          </table>
+        </div>
+        <div id="empty-state" class="empty-state" hidden>暂无匹配结果。</div>
+      </section>
+
+      <section class="method-note">
+        <strong>怎么看：</strong>
+        舆情分数衡量当前情绪方向，变化值比较本次与上次分析。评级和技术面是辅助信息，不等同于买卖指令。
+      </section>
+    </main>
+
+    <dialog id="detail-dialog">
+      <div class="dialog-shell">
+        <header class="dialog-header">
+          <div>
+            <p class="eyebrow" id="detail-date"></p>
+            <h2 id="detail-title"></h2>
+            <p id="detail-summary"></p>
+          </div>
+          <button id="close-dialog" class="icon-button" aria-label="关闭详情">×</button>
+        </header>
+        <div class="detail-stats" id="detail-stats"></div>
+        <nav class="tabs" aria-label="报告章节">
+          <button class="tab active" data-tab="sentiment">舆情分析</button>
+          <button class="tab" data-tab="news">新闻与事件</button>
+          <button class="tab" data-tab="market">技术分析</button>
+          <button class="tab" data-tab="history">历史变化</button>
+          <a id="full-report" class="tab report-link" target="_blank" rel="noopener">完整报告 ↗</a>
+        </nav>
+        <section id="detail-content" class="detail-content"></section>
+      </div>
+    </dialog>
+
+    <footer>
+      <span>自动化研究，仅供信息参考，不构成投资建议。</span>
+      <a href="https://github.com/lilidan/TradingAgents" target="_blank" rel="noopener">GitHub</a>
+    </footer>
+    <script src="./app.js" defer></script>
+  </body>
+</html>

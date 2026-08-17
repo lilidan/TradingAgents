@@ -1,0 +1,164 @@
+name: Sentiment dashboard
+
+on:
+  schedule:
+    # 06:20 Asia/Shanghai every day; the prepare job enforces an exact 2-day cadence.
+    - cron: "20 22 * * *"
+  workflow_dispatch:
+    inputs:
+      analysis_date:
+        description: Analysis date (YYYY-MM-DD); blank uses the Beijing date
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sentiment-dashboard
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Check two-day cadence
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.schedule.outputs.should_run }}
+      analysis_date: ${{ steps.schedule.outputs.analysis_date }}
+    steps:
+      - name: Resolve Beijing analysis date
+        id: schedule
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_ANALYSIS_DATE: ${{ inputs.analysis_date }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          from datetime import date, datetime
+          from zoneinfo import ZoneInfo
+
+          requested = os.environ.get("INPUT_ANALYSIS_DATE", "").strip()
+          analysis_date = date.fromisoformat(requested) if requested else datetime.now(
+              ZoneInfo("Asia/Shanghai")
+          ).date()
+          anchor = date(2026, 8, 18)
+          scheduled_day = (analysis_date - anchor).days >= 0 and (analysis_date - anchor).days % 2 == 0
+          should_run = os.environ["EVENT_NAME"] == "workflow_dispatch" or scheduled_day
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"analysis_date={analysis_date.isoformat()}\n")
+              output.write(f"should_run={'true' if should_run else 'false'}\n")
+          print(f"analysis_date={analysis_date}; should_run={should_run}")
+          PY
+
+  analyze:
+    name: Analyze ${{ matrix.ticker }}
+    needs: prepare
+    if: needs.prepare.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        ticker: [NVDA, AMD, MU, SNDK, SKHY, MSFT, GOOG, TSM, LITE, NBIS, SPCX]
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      TRADINGAGENTS_RESULTS_DIR: ${{ github.workspace }}/artifacts/logs/${{ matrix.ticker }}
+      TRADINGAGENTS_CACHE_DIR: ${{ github.workspace }}/.tradingagents/${{ matrix.ticker }}/cache
+      TRADINGAGENTS_MEMORY_LOG_PATH: ${{ github.workspace }}/.tradingagents/${{ matrix.ticker }}/memory/trading_memory.md
+      TRADINGAGENTS_LLM_MAX_RETRIES: "4"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Restore ticker checkpoints and decision memory
+        uses: actions/cache@v6
+        with:
+          path: .tradingagents/${{ matrix.ticker }}
+          key: tradingagents-state-${{ matrix.ticker }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            tradingagents-state-${{ matrix.ticker }}-
+
+      - name: Install TradingAgents
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+
+      - name: Run full analysis
+        timeout-minutes: 165
+        run: |
+          python scripts/run_github_analysis.py \
+            --ticker "${{ matrix.ticker }}" \
+            --date "${{ needs.prepare.outputs.analysis_date }}" \
+            --provider deepseek \
+            --analysts market,social,news,fundamentals \
+            --output-language Chinese \
+            --debate-rounds 1 \
+            --risk-rounds 1 \
+            --output-dir artifacts/reports
+
+      - name: Upload this ticker's reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: sentiment-${{ matrix.ticker }}-${{ github.run_id }}
+          path: artifacts
+          if-no-files-found: warn
+          retention-days: 14
+
+  publish:
+    name: Build and publish Cloudflare Pages
+    needs: [prepare, analyze]
+    if: always() && needs.prepare.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out application source
+        uses: actions/checkout@v7
+
+      - name: Check out dashboard history
+        uses: actions/checkout@v7
+        with:
+          ref: dashboard-data
+          path: dashboard-history
+
+      - name: Download completed analyses
+        uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          pattern: sentiment-*-${{ github.run_id }}
+          path: incoming-artifacts
+          merge-multiple: true
+
+      - name: Build sentiment-first dashboard
+        run: |
+          python scripts/build_dashboard.py \
+            --incoming-root incoming-artifacts \
+            --archive-dir dashboard-history/archive \
+            --assets-dir dashboard \
+            --output-dir dashboard-history/site-dist \
+            --retention-days 370
+
+      - name: Save report history and publishable site
+        working-directory: dashboard-history
+        env:
+          ANALYSIS_DATE: ${{ needs.prepare.outputs.analysis_date }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add archive
+          git add -f site-dist
+          if git diff --cached --quiet; then
+            echo "No new reports to archive"
+          else
+            git commit -m "publish sentiment dashboard ${ANALYSIS_DATE}"
+            git push origin HEAD:dashboard-data
+          fi
