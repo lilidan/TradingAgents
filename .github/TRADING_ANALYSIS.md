@@ -32,7 +32,7 @@ most two tickers analyzed concurrently. Its watchlist is:
 
 `NVDA, AMD, MU, SNDK, SKHY, MSFT, GOOG, TSM, LITE, NBIS, SPCX`
 
-The schedule is evaluated at 06:20 Asia/Shanghai and is anchored to 2026-08-18. A manual
+The schedule is evaluated at 06:20 Asia/Shanghai and is anchored to 2026-08-19. A manual
 dispatch always runs immediately, regardless of the two-day cadence.
 
 Each run stores a compact 370-day history on the `dashboard-data` branch. The static site
