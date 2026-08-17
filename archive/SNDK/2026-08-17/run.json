@@ -1,0 +1,19 @@
+{
+  "ticker": "SNDK",
+  "analysis_date": "2026-08-17",
+  "asset_type": "stock",
+  "provider": "deepseek",
+  "quick_model": "deepseek-v4-flash",
+  "deep_model": "deepseek-v4-flash",
+  "analysts": [
+    "market",
+    "social",
+    "news",
+    "fundamentals"
+  ],
+  "debate_rounds": 1,
+  "risk_rounds": 1,
+  "output_language": "Chinese",
+  "decision": "Hold",
+  "report_file": "artifacts/reports/SNDK_2026-08-17/complete_report.md"
+}
