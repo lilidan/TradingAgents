@@ -1,0 +1,139 @@
+name: Trading analysis
+
+on:
+  workflow_dispatch:
+    inputs:
+      ticker:
+        description: Yahoo Finance ticker (AAPL, 0700.HK, BTC-USD)
+        required: true
+        default: AAPL
+        type: string
+      analysis_date:
+        description: Analysis date (YYYY-MM-DD); blank uses the runner date
+        required: false
+        type: string
+      provider:
+        description: LLM provider
+        required: true
+        default: deepseek
+        type: choice
+        options:
+          - deepseek
+          - openrouter
+      quick_model:
+        description: Optional for DeepSeek; required OpenRouter model ID for OpenRouter
+        required: false
+        type: string
+      deep_model:
+        description: Optional for DeepSeek; required OpenRouter model ID for OpenRouter
+        required: false
+        type: string
+      analysts:
+        description: Comma-separated market,social,news,fundamentals
+        required: true
+        default: market,social,news,fundamentals
+        type: string
+      output_language:
+        description: Report language
+        required: true
+        default: Chinese
+        type: choice
+        options:
+          - Chinese
+          - English
+      debate_rounds:
+        description: Bull/bear debate rounds (1-3; higher costs more)
+        required: true
+        default: "1"
+        type: choice
+        options: ["1", "2", "3"]
+      risk_rounds:
+        description: Risk debate rounds (1-3; higher costs more)
+        required: true
+        default: "1"
+        type: choice
+        options: ["1", "2", "3"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trading-analysis-${{ inputs.ticker }}
+  cancel-in-progress: false
+
+jobs:
+  analyze:
+    name: Analyze ${{ inputs.ticker }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_TICKER: ${{ inputs.ticker }}
+      INPUT_ANALYSIS_DATE: ${{ inputs.analysis_date }}
+      INPUT_PROVIDER: ${{ inputs.provider }}
+      INPUT_QUICK_MODEL: ${{ inputs.quick_model }}
+      INPUT_DEEP_MODEL: ${{ inputs.deep_model }}
+      INPUT_ANALYSTS: ${{ inputs.analysts }}
+      INPUT_OUTPUT_LANGUAGE: ${{ inputs.output_language }}
+      INPUT_DEBATE_ROUNDS: ${{ inputs.debate_rounds }}
+      INPUT_RISK_ROUNDS: ${{ inputs.risk_rounds }}
+      TRADINGAGENTS_RESULTS_DIR: ${{ github.workspace }}/artifacts/logs
+      TRADINGAGENTS_CACHE_DIR: ${{ github.workspace }}/.tradingagents/cache
+      TRADINGAGENTS_MEMORY_LOG_PATH: ${{ github.workspace }}/.tradingagents/memory/trading_memory.md
+      TRADINGAGENTS_LLM_MAX_RETRIES: "4"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Restore checkpoints and decision memory
+        uses: actions/cache@v4
+        with:
+          path: .tradingagents
+          key: tradingagents-state-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            tradingagents-state-
+
+      - name: Install TradingAgents
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+
+      - name: Run analysis
+        id: analysis
+        timeout-minutes: 165
+        shell: bash
+        run: |
+          args=(
+            --ticker "${INPUT_TICKER}"
+            --provider "${INPUT_PROVIDER}"
+            --quick-model "${INPUT_QUICK_MODEL}"
+            --deep-model "${INPUT_DEEP_MODEL}"
+            --analysts "${INPUT_ANALYSTS}"
+            --output-language "${INPUT_OUTPUT_LANGUAGE}"
+            --debate-rounds "${INPUT_DEBATE_ROUNDS}"
+            --risk-rounds "${INPUT_RISK_ROUNDS}"
+            --output-dir "artifacts/reports"
+          )
+          if [[ -n "${INPUT_ANALYSIS_DATE}" ]]; then
+            args+=(--date "${INPUT_ANALYSIS_DATE}")
+          fi
+          python scripts/run_github_analysis.py "${args[@]}"
+
+      - name: Upload reports, logs, and checkpoints
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trading-analysis-${{ github.run_id }}
+          path: |
+            artifacts
+            .tradingagents
+          if-no-files-found: warn
+          retention-days: 14
