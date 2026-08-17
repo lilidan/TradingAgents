@@ -51,6 +51,17 @@ jobs:
           print(f"analysis_date={analysis_date}; should_run={should_run}")
           PY
 
+      - name: Verify OpenRouter secret
+        if: steps.schedule.outputs.should_run == 'true'
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        shell: bash
+        run: |
+          if [[ -z "${OPENROUTER_API_KEY}" ]]; then
+            echo "::error::Missing OPENROUTER_API_KEY repository secret"
+            exit 1
+          fi
+
   analyze:
     name: Analyze ${{ matrix.ticker }}
     needs: prepare
@@ -63,7 +74,9 @@ jobs:
       matrix:
         ticker: [NVDA, AMD, MU, SNDK, SKHY, MSFT, GOOG, TSM, LITE, NBIS, SPCX]
     env:
-      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      OPENROUTER_QUICK_MODEL: nvidia/nemotron-3-super-120b-a12b:free
+      OPENROUTER_DEEP_MODEL: nvidia/nemotron-3-ultra-550b-a55b:free
       TRADINGAGENTS_RESULTS_DIR: ${{ github.workspace }}/artifacts/logs/${{ matrix.ticker }}
       TRADINGAGENTS_CACHE_DIR: ${{ github.workspace }}/.tradingagents/${{ matrix.ticker }}/cache
       TRADINGAGENTS_MEMORY_LOG_PATH: ${{ github.workspace }}/.tradingagents/${{ matrix.ticker }}/memory/trading_memory.md
@@ -98,7 +111,9 @@ jobs:
           python scripts/run_github_analysis.py \
             --ticker "${{ matrix.ticker }}" \
             --date "${{ needs.prepare.outputs.analysis_date }}" \
-            --provider deepseek \
+            --provider openrouter \
+            --quick-model "${OPENROUTER_QUICK_MODEL}" \
+            --deep-model "${OPENROUTER_DEEP_MODEL}" \
             --analysts market,social,news,fundamentals \
             --output-language Chinese \
             --debate-rounds 1 \
@@ -137,6 +152,9 @@ jobs:
           pattern: sentiment-*-${{ github.run_id }}
           path: incoming-artifacts
           merge-multiple: true
+
+      - name: Install dashboard Markdown renderer
+        run: python -m pip install "markdown-it-py>=3.0.0,<5.0.0"
 
       - name: Build sentiment-first dashboard
         run: |

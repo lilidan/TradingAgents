@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import re
 import shutil
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+
+from markdown_it import MarkdownIt
 
 SENTIMENT_RE = re.compile(
     r"\*\*Overall Sentiment:\*\*\s*\*\*(?P<band>.+?)\*\*\s*"
@@ -17,6 +20,10 @@ SENTIMENT_RE = re.compile(
 CONFIDENCE_RE = re.compile(r"\*\*Confidence:\*\*\s*(?P<confidence>\w+)", re.IGNORECASE)
 MARKDOWN_RE = re.compile(r"[`*_>#|\[\]]")
 CONFIDENCE_ZH = {"low": "低", "medium": "中", "high": "高"}
+MARKDOWN = MarkdownIt(
+    "commonmark",
+    {"html": False, "linkify": False, "typographer": False},
+).enable(["table", "strikethrough"])
 
 ARCHIVE_FILES = {
     "run.json": "run.json",
@@ -40,6 +47,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.exists() else ""
+
+
+def render_markdown(text: str) -> str:
+    """Render report Markdown while escaping any raw HTML from model output."""
+    return MARKDOWN.render(text or "本期没有生成这一章节。")
 
 
 def parse_sentiment(text: str) -> dict:
@@ -188,7 +200,12 @@ def build_payload(grouped: dict[str, list[dict]], generated_at: datetime) -> dic
                     "news": latest["news_text"],
                     "market": latest["market_text"],
                 },
-                "report_url": f"./reports/{ticker}/{latest['date']}/complete_report.md",
+                "reports_html": {
+                    "sentiment": render_markdown(latest["sentiment_text"]),
+                    "news": render_markdown(latest["news_text"]),
+                    "market": render_markdown(latest["market_text"]),
+                },
+                "report_url": f"./reports/{ticker}/{latest['date']}/complete_report.html",
                 "history": [
                     {
                         "date": run["date"],
@@ -217,6 +234,32 @@ def build_payload(grouped: dict[str, list[dict]], generated_at: datetime) -> dic
     }
 
 
+def render_report_page(ticker: str, report_date: str, markdown: str) -> str:
+    title = f"{ticker} · {report_date} · 完整报告"
+    return f"""<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="{html.escape(title, quote=True)}" />
+    <title>{html.escape(title)}</title>
+    <link rel="icon" href="../../../favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../../../styles.css" />
+  </head>
+  <body class="report-page">
+    <main class="standalone-report">
+      <nav class="report-toolbar">
+        <a href="../../../">← 返回舆情雷达</a>
+        <span>{html.escape(ticker)} · {html.escape(report_date)}</span>
+      </nav>
+      <article class="markdown-body">
+{render_markdown(markdown)}      </article>
+    </main>
+  </body>
+</html>
+"""
+
+
 def write_site(assets_dir: Path, output_dir: Path, archive_dir: Path, payload: dict) -> None:
     if output_dir.exists():
         shutil.rmtree(output_dir)
@@ -235,6 +278,10 @@ def write_site(assets_dir: Path, output_dir: Path, archive_dir: Path, payload: d
                 target_dir = reports_dir / ticker / point["date"]
                 target_dir.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(source, target_dir / "complete_report.md")
+                (target_dir / "complete_report.html").write_text(
+                    render_report_page(ticker, point["date"], _read(source)),
+                    encoding="utf-8",
+                )
 
 
 def main(argv: list[str] | None = None) -> int:

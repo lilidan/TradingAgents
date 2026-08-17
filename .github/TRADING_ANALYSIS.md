@@ -35,6 +35,12 @@ most two tickers analyzed concurrently. Its watchlist is:
 The schedule is evaluated at 06:20 Asia/Shanghai and is anchored to 2026-08-19. A manual
 dispatch always runs immediately, regardless of the two-day cadence.
 
+The scheduled dashboard uses OpenRouter free models: `nvidia/nemotron-3-super-120b-a12b:free`
+for quick analysis and `nvidia/nemotron-3-ultra-550b-a55b:free` for deep analysis. The
+repository must contain an `OPENROUTER_API_KEY` secret. OpenRouter applies an account-wide
+daily request limit to free models, so a full 11-symbol run may require an account with the
+higher free-model quota or a paid-model fallback.
+
 Each run stores a compact 370-day history on the `dashboard-data` branch. The static site
 sorts tickers by the magnitude of sentiment-score change and treats technical analysis and
 the portfolio rating as secondary detail.
@@ -42,4 +48,5 @@ the portfolio rating as secondary detail.
 Cloudflare Pages uses its Git integration rather than an API token. Configure the Pages
 project once with production branch `dashboard-data`, no build command, and output directory
 `site-dist`. Subsequent `dashboard-data` pushes publish automatically, so no Cloudflare
-credential is stored in GitHub.
+credential is stored in GitHub. The canonical production URL is
+<https://lilidan-tradingagents.pages.dev/>.
