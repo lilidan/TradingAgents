@@ -1,4 +1,5 @@
 const state = { data: null, filter: "all", query: "", selected: null, tab: "sentiment" };
+const REMOTE_DATA_URL = "https://lilidan-tradingagents.pages.dev/data/dashboard.json";
 
 const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value = "") => String(value)
@@ -142,7 +143,14 @@ function openDetail(ticker) {
 
 async function init() {
   try {
-    const response = await fetch("./data/dashboard.json", { cache: "no-store" });
+    // The source dashboard directory intentionally contains only the UI assets;
+    // generated data lives under site-dist/data on Pages. When someone opens
+    // dashboard/index.html directly from Finder/IDE, resolve the data remotely
+    // instead of making a file:// request that browsers reject via CORS.
+    const dataUrl = window.location.protocol === "file:"
+      ? REMOTE_DATA_URL
+      : "./data/dashboard.json";
+    const response = await fetch(dataUrl, { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     state.data = await response.json();
     renderMetrics(state.data.symbols);
