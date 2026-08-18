@@ -170,6 +170,17 @@ class TradingAgentsGraph:
             if effort:
                 kwargs["effort"] = effort
 
+        elif provider == "openrouter":
+            routing = self.config.get("openrouter_provider_routing")
+            fallback_models = self.config.get("openrouter_fallback_models")
+            if routing or fallback_models:
+                extra_body = {}
+                if routing:
+                    extra_body["provider"] = routing
+                if fallback_models:
+                    extra_body["models"] = list(fallback_models)
+                kwargs["extra_body"] = extra_body
+
         # Sampling temperature is cross-provider: forward it whenever set.
         # float() here so a value coming from a TRADINGAGENTS_TEMPERATURE env
         # string ("0.2") works the same as a programmatic float.

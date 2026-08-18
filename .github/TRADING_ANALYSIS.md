@@ -41,6 +41,12 @@ repository must contain an `OPENROUTER_API_KEY` secret. OpenRouter applies an ac
 daily request limit to free models, so a full 11-symbol run may require an account with the
 higher free-model quota or a paid-model fallback.
 
+OpenRouter requests sort providers globally by throughput and prefer endpoints whose rolling
+p90 throughput is at least 50 tokens/second. The request also requires all parameters used by
+TradingAgents and supplies free-model fallbacks (`Nemotron 3.5 Lightning`, `Gemma 4 26B`, and
+`GPT-OSS 20B`). OpenRouter treats this threshold as a preference rather than an absolute deny
+list; if no qualifying endpoint is available, a slower healthy fallback can still run.
+
 Each run stores a compact 370-day history on the `dashboard-data` branch. The static site
 sorts tickers by the magnitude of sentiment-score change and treats technical analysis and
 the portfolio rating as secondary detail.
