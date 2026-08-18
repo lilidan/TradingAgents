@@ -14,6 +14,41 @@ from tradingagents.llm_clients.openai_client import (
 
 
 @pytest.mark.unit
+def test_openrouter_passes_provider_routing_and_fallback_models(monkeypatch):
+    from langchain_core.messages import HumanMessage
+
+    from tradingagents.graph.trading_graph import TradingAgentsGraph
+    from tradingagents.llm_clients.openai_client import OpenAIClient
+
+    routing = {
+        "sort": {"by": "throughput", "partition": "none"},
+        "preferred_min_throughput": {"p90": 50},
+        "require_parameters": True,
+    }
+    graph = TradingAgentsGraph.__new__(TradingAgentsGraph)
+    graph.config = {
+        "llm_provider": "openrouter",
+        "openrouter_provider_routing": routing,
+        "openrouter_fallback_models": ["openai/gpt-oss-20b:free"],
+    }
+    kwargs = graph._get_provider_kwargs()
+    assert kwargs["extra_body"] == {
+        "provider": routing,
+        "models": ["openai/gpt-oss-20b:free"],
+    }
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "placeholder")
+    llm = OpenAIClient(
+        "nvidia/nemotron-3-super-120b-a12b:free",
+        provider="openrouter",
+        extra_body=kwargs["extra_body"],
+    ).get_llm()
+    payload = llm._get_request_payload([HumanMessage(content="test")])
+    assert payload["extra_body"]["provider"]["preferred_min_throughput"] == {"p90": 50}
+    assert payload["extra_body"]["models"] == ["openai/gpt-oss-20b:free"]
+
+
+@pytest.mark.unit
 def test_registry_membership():
     assert is_openai_compatible("openai")
     assert is_openai_compatible("openai_compatible")  # the generic endpoint

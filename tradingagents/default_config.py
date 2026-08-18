@@ -100,6 +100,20 @@ DEFAULT_CONFIG = _apply_env_overrides({
     # provider/SDK at its own default (usually 2). Raise it to ride out bursty
     # 429 throttling on rate-limited deployments instead of aborting a run (#1091).
     "llm_max_retries": None,
+    # OpenRouter routing: prefer endpoints whose rolling p90 throughput is at
+    # least 50 tokens/sec, while still allowing a healthy fallback if no
+    # endpoint currently meets the preference. ``partition=none`` lets the
+    # router compare the configured fallback models globally by throughput.
+    "openrouter_provider_routing": {
+        "sort": {"by": "throughput", "partition": "none"},
+        "preferred_min_throughput": {"p90": 50},
+        "require_parameters": True,
+    },
+    "openrouter_fallback_models": [
+        "nvidia/nemotron-3.5-lightning:free",
+        "google/gemma-4-26b-a4b-it:free",
+        "openai/gpt-oss-20b:free",
+    ],
     # Checkpoint/resume: when True, LangGraph saves state after each node
     # so a crashed run can resume from the last successful step.
     "checkpoint_enabled": False,
