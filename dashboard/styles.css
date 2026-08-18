@@ -212,15 +212,20 @@ dialog {
   max-width: none;
   max-height: none;
   padding: 0;
+  margin: 0;
+  inset: 0;
+  overflow: hidden;
   border: 0;
   color: var(--text);
   background: transparent;
   box-shadow: none;
 }
 dialog::backdrop { background: rgba(16, 38, 33, 0.42); backdrop-filter: blur(4px); }
-.drawer-shell { display: grid; grid-template-columns: minmax(240px, 25vw) minmax(0, 1fr); width: 100%; height: 100%; }
+.drawer-shell { display: grid; grid-template-columns: minmax(240px, 25vw) minmax(0, 1fr); width: 100%; height: 100dvh; overflow: hidden; }
 .drawer-sidebar {
   display: flex;
+  height: 100dvh;
+  min-height: 0;
   min-width: 0;
   flex-direction: column;
   padding: 36px 22px 22px;
@@ -264,12 +269,12 @@ dialog::backdrop { background: rgba(16, 38, 33, 0.42); backdrop-filter: blur(4px
 .drawer-sidebar-footer { margin-top: auto; }
 .back-button { border: 0; color: #b6cbc4; background: transparent; cursor: pointer; font-size: 12px; }
 .back-button:hover { color: #fff; }
-.drawer-main { min-width: 0; overflow-y: auto; padding: 46px clamp(26px, 4vw, 68px) 38px; background: var(--panel); }
+.drawer-main { height: 100dvh; min-width: 0; min-height: 0; overflow-x: hidden; overflow-y: auto; padding: 46px clamp(26px, 4vw, 68px) 38px; background: var(--panel); }
 .dialog-header { display: flex; justify-content: space-between; gap: 24px; }
 .dialog-header h2 { margin-bottom: 8px; font-size: clamp(28px, 3vw, 42px); letter-spacing: -0.045em; }
 .dialog-header > div > p:last-child { margin-bottom: 0; color: #536761; max-width: 980px; font-size: 14px; line-height: 1.68; }
 .icon-button { width: 42px; height: 42px; flex: 0 0 auto; border-radius: 50%; font-size: 25px; }
-.tabs { position: sticky; z-index: 10; top: -1px; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; padding: 13px 0 14px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.tabs { position: sticky; z-index: 10; top: -46px; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; padding: 13px 0 14px; border-bottom: 1px solid var(--line); background: var(--panel); }
 .tab { padding: 9px 13px; border-radius: 9px; font-size: 12px; text-decoration: none; }
 .report-link { margin-left: auto; }
 .detail-content { min-height: 0; padding: 28px 8px 18px 0; }
@@ -358,7 +363,7 @@ footer { display: flex; justify-content: space-between; padding: 0 0 32px; font-
   .history-row { grid-template-columns: 82px 1fr 42px; }
   .history-row .history-band { display: none; }
   .drawer-shell { display: flex; flex-direction: column; }
-  .drawer-sidebar { flex: 0 0 auto; padding: 15px 14px 10px; }
+  .drawer-sidebar { height: auto; flex: 0 0 auto; padding: 15px 14px 10px; }
   .drawer-sidebar-header { display: flex; align-items: baseline; gap: 10px; }
   .drawer-sidebar-header .eyebrow { margin: 0; }
   .drawer-sidebar-header h2 { margin: 0; font-size: 20px; }
@@ -367,7 +372,8 @@ footer { display: flex; justify-content: space-between; padding: 0 0 32px; font-
   .drawer-item { flex: 0 0 106px; display: grid; gap: 4px; padding: 9px 10px; }
   .drawer-item-score { display: flex; align-items: baseline; justify-content: space-between; }
   .drawer-sidebar-footer { display: none; }
-  .drawer-main { flex: 1; padding: 22px 18px 18px; }
+  .drawer-main { height: auto; min-height: 0; flex: 1; padding: 22px 18px 18px; }
+  .tabs { top: -22px; }
   .dialog-header { gap: 12px; }
   .dialog-header h2 { font-size: 34px; }
   .detail-content { padding-top: 20px; }
