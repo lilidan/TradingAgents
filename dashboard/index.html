@@ -91,25 +91,39 @@
       </section>
     </main>
 
-    <dialog id="detail-dialog">
-      <div class="dialog-shell">
-        <header class="dialog-header">
-          <div>
-            <p class="eyebrow" id="detail-date"></p>
-            <h2 id="detail-title"></h2>
-            <p id="detail-summary"></p>
+    <dialog id="detail-dialog" aria-labelledby="detail-title">
+      <div class="drawer-shell">
+        <aside class="drawer-sidebar">
+          <div class="drawer-sidebar-header">
+            <p class="eyebrow">CHANGE WATCH</p>
+            <h2>重点标的</h2>
+            <p id="drawer-count">点击标的切换报告</p>
           </div>
-          <button id="close-dialog" class="icon-button" aria-label="关闭详情">×</button>
-        </header>
-        <div class="detail-stats" id="detail-stats"></div>
-        <nav class="tabs" aria-label="报告章节">
-          <button class="tab active" data-tab="sentiment">舆情分析</button>
-          <button class="tab" data-tab="news">新闻与事件</button>
-          <button class="tab" data-tab="market">技术分析</button>
-          <button class="tab" data-tab="history">历史变化</button>
-          <a id="full-report" class="tab report-link" target="_blank" rel="noopener">完整报告 ↗</a>
-        </nav>
-        <section id="detail-content" class="detail-content"></section>
+          <div id="drawer-list" class="drawer-list" role="listbox" aria-label="选择标的"></div>
+          <div class="drawer-sidebar-footer">
+            <button id="close-dialog" class="back-button" type="button">← 返回总览</button>
+          </div>
+        </aside>
+
+        <section class="drawer-main">
+          <header class="dialog-header">
+            <div>
+              <p class="eyebrow" id="detail-date"></p>
+              <h2 id="detail-title"></h2>
+              <p id="detail-summary"></p>
+            </div>
+            <button id="close-dialog-icon" class="icon-button" aria-label="关闭详情" type="button">×</button>
+          </header>
+          <div class="detail-stats" id="detail-stats"></div>
+          <nav class="tabs" aria-label="报告章节">
+            <button class="tab active" data-tab="sentiment">舆情分析</button>
+            <button class="tab" data-tab="news">新闻与事件</button>
+            <button class="tab" data-tab="market">技术分析</button>
+            <button class="tab" data-tab="history">历史变化</button>
+            <a id="full-report" class="tab report-link" target="_blank" rel="noopener">完整报告 ↗</a>
+          </nav>
+          <section id="detail-content" class="detail-content"></section>
+        </section>
       </div>
     </dialog>
 
