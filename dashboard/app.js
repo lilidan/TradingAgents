@@ -1,5 +1,6 @@
 const state = { data: null, filter: "all", query: "", selected: null, tab: "sentiment" };
 const REMOTE_DATA_URL = "https://lilidan-tradingagents.pages.dev/data/dashboard.json";
+const scrollTimers = new WeakMap();
 
 const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value = "") => String(value)
@@ -92,6 +93,17 @@ function renderDrawerList() {
   });
 }
 
+function bindScrollFeedback() {
+  document.querySelectorAll(".drawer-main, .drawer-list").forEach((target) => {
+    target.addEventListener("scroll", () => {
+      target.classList.add("is-scrolling");
+      clearTimeout(scrollTimers.get(target));
+      const timer = setTimeout(() => target.classList.remove("is-scrolling"), 650);
+      scrollTimers.set(target, timer);
+    }, { passive: true });
+  });
+}
+
 function renderHistory(item) {
   if (!item.history.length) return '<p class="muted">暂无历史记录。</p>';
   return `<div class="history-chart">${item.history.map((point) => `
@@ -176,4 +188,5 @@ document.querySelector(".tabs").addEventListener("click", (event) => {
   renderDetailContent();
 });
 
+bindScrollFeedback();
 init();

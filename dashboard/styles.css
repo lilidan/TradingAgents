@@ -237,6 +237,35 @@ dialog::backdrop { background: rgba(16, 38, 33, 0.42); backdrop-filter: blur(4px
 .drawer-sidebar-header h2 { margin: 0 0 8px; font-size: 28px; letter-spacing: -0.04em; }
 .drawer-sidebar-header > p:last-child { margin: 0; color: #9db4ad; font-size: 12px; }
 .drawer-list { display: grid; gap: 5px; min-height: 0; margin: 28px -8px 18px; overflow: auto; padding: 0 8px 4px; }
+.drawer-list, .drawer-main {
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
+}
+.drawer-list { scrollbar-color: rgba(116, 183, 164, 0.52) transparent; }
+.drawer-main { scrollbar-color: rgba(58, 91, 82, 0.4) transparent; }
+.drawer-list::-webkit-scrollbar, .drawer-main::-webkit-scrollbar { width: 10px; height: 10px; }
+.drawer-list::-webkit-scrollbar-track { background: transparent; }
+.drawer-main::-webkit-scrollbar-track { background: rgba(223, 229, 223, 0.52); border-radius: 999px; }
+.drawer-list::-webkit-scrollbar-thumb {
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: rgba(116, 183, 164, 0.42);
+  transition: background-color 240ms ease, box-shadow 240ms ease;
+}
+.drawer-main::-webkit-scrollbar-thumb {
+  border: 3px solid var(--panel);
+  border-radius: 999px;
+  background: rgba(58, 91, 82, 0.32);
+  transition: background-color 240ms ease, box-shadow 240ms ease;
+}
+.drawer-list.is-scrolling::-webkit-scrollbar-thumb {
+  background: rgba(67, 198, 160, 0.88);
+  box-shadow: 0 0 0 1px rgba(67, 198, 160, 0.22);
+}
+.drawer-main.is-scrolling::-webkit-scrollbar-thumb {
+  background: rgba(8, 127, 104, 0.7);
+  box-shadow: 0 0 0 1px rgba(8, 127, 104, 0.16);
+}
 .drawer-item {
   display: flex;
   align-items: center;
