@@ -83,7 +83,7 @@ function renderDrawerList() {
     const selected = state.selected?.ticker === item.ticker;
     return `
       <button class="drawer-item${selected ? " active" : ""}" type="button" role="option" aria-selected="${selected}" data-ticker="${escapeHtml(item.ticker)}">
-        <span class="drawer-item-main"><strong>${escapeHtml(item.ticker)}</strong><small>${escapeHtml(item.sentiment.band || "舆情未定")}</small></span>
+        <span class="drawer-item-main"><strong>${escapeHtml(item.ticker)}</strong><span class="drawer-item-meta"><small>${escapeHtml(item.sentiment.band || "舆情未定")}</small><em>${escapeHtml(item.rating || "评级未定")}</em></span></span>
         <span class="drawer-item-score"><strong>${score}</strong><em class="drawer-delta ${kind}">${escapeHtml(deltaLabel)}</em></span>
       </button>`;
   }).join("");
@@ -129,12 +129,6 @@ function openDetail(ticker) {
   $("#detail-title").textContent = item.ticker;
   $("#detail-summary").textContent = item.sentiment.summary || "暂无舆情摘要";
   const delta = item.sentiment.delta == null ? "首次记录" : `${item.sentiment.delta > 0 ? "+" : ""}${item.sentiment.delta.toFixed(1)}`;
-  $("#detail-stats").innerHTML = [
-    ["舆情分数", Number.isFinite(item.sentiment.score) ? `${item.sentiment.score.toFixed(1)} / 10` : "—"],
-    ["两期变化", delta],
-    ["舆情方向", item.sentiment.band || "—"],
-    ["投资评级（次级）", item.rating || "—"],
-  ].map(([label, value]) => `<div class="detail-stat"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
   $("#full-report").href = item.report_url;
   renderDrawerList();
   renderDetailContent();
