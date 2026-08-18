@@ -1,0 +1,19 @@
+{
+  "ticker": "SNDK",
+  "analysis_date": "2026-08-19",
+  "asset_type": "stock",
+  "provider": "openrouter",
+  "quick_model": "nvidia/nemotron-3-super-120b-a12b:free",
+  "deep_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "analysts": [
+    "market",
+    "social",
+    "news",
+    "fundamentals"
+  ],
+  "debate_rounds": 1,
+  "risk_rounds": 1,
+  "output_language": "Chinese",
+  "decision": "Hold",
+  "report_file": "artifacts/reports/SNDK_2026-08-19/complete_report.md"
+}
