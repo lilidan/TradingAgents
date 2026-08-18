@@ -67,6 +67,28 @@ function renderTable() {
       if (event.key === "Enter" || event.key === " ") { event.preventDefault(); open(); }
     });
   });
+  if ($("#detail-dialog").open) renderDrawerList();
+}
+
+function renderDrawerList() {
+  if (!state.data) return;
+  const items = state.data.symbols;
+  $("#drawer-count").textContent = `${items.length} 个重点标的 · 点击切换报告`;
+  $("#drawer-list").innerHTML = items.map((item) => {
+    const score = Number.isFinite(item.sentiment.score) ? item.sentiment.score.toFixed(1) : "—";
+    const delta = item.sentiment.delta;
+    const deltaLabel = delta == null ? "首次" : `${delta > 0 ? "+" : ""}${delta.toFixed(1)}`;
+    const kind = delta == null ? "first" : delta >= 0.3 ? "up" : delta <= -0.3 ? "down" : "stable";
+    const selected = state.selected?.ticker === item.ticker;
+    return `
+      <button class="drawer-item${selected ? " active" : ""}" type="button" role="option" aria-selected="${selected}" data-ticker="${escapeHtml(item.ticker)}">
+        <span class="drawer-item-main"><strong>${escapeHtml(item.ticker)}</strong><small>${escapeHtml(item.sentiment.band || "舆情未定")}</small></span>
+        <span class="drawer-item-score"><strong>${score}</strong><em class="drawer-delta ${kind}">${escapeHtml(deltaLabel)}</em></span>
+      </button>`;
+  }).join("");
+  document.querySelectorAll(".drawer-item").forEach((button) => {
+    button.addEventListener("click", () => openDetail(button.dataset.ticker));
+  });
 }
 
 function renderHistory(item) {
@@ -113,8 +135,9 @@ function openDetail(ticker) {
     ["投资评级（次级）", item.rating || "—"],
   ].map(([label, value]) => `<div class="detail-stat"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
   $("#full-report").href = item.report_url;
+  renderDrawerList();
   renderDetailContent();
-  $("#detail-dialog").showModal();
+  if (!$("#detail-dialog").open) $("#detail-dialog").showModal();
 }
 
 async function init() {
@@ -142,6 +165,7 @@ $("#filters").addEventListener("click", (event) => {
 
 $("#search").addEventListener("input", (event) => { state.query = event.target.value; if (state.data) renderTable(); });
 $("#close-dialog").addEventListener("click", () => $("#detail-dialog").close());
+$("#close-dialog-icon").addEventListener("click", () => $("#detail-dialog").close());
 $("#detail-dialog").addEventListener("click", (event) => { if (event.target === event.currentTarget) event.currentTarget.close(); });
 document.querySelector(".tabs").addEventListener("click", (event) => {
   const tab = event.target.closest("button[data-tab]");
