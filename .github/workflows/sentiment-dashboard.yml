@@ -1,9 +1,7 @@
 name: Sentiment dashboard
 
 on:
-  schedule:
-    # 06:20 Asia/Shanghai every day; the prepare job enforces an exact 2-day cadence.
-    - cron: "20 22 * * *"
+  # Scheduled execution is paused. Keep manual runs available below.
   workflow_dispatch:
     inputs:
       analysis_date:
